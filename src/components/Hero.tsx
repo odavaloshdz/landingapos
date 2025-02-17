@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Users, ShoppingBag, Star } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowRight, Users, ShoppingBag, Star, FileText, Book } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const stats = [
-  { icon: Users, value: '1,000+', label: 'hero.stats.clients', endValue: 1000 },
-  { icon: ShoppingBag, value: '10M+', label: 'hero.stats.transactions', endValue: 10000000 },
-  { icon: Star, value: '4.9/5', label: 'hero.stats.satisfaction', endValue: 4.9 }
+  { icon: Users, value: '145', label: 'hero.stats.registeredCompanies', endValue: 145 },
+  { icon: Users, value: '400+', label: 'hero.stats.dailyUsers', endValue: 400 },
+  { icon: FileText, value: '50K', label: 'hero.stats.invoicesCreated', endValue: 50000 },
+  { icon: Book, value: '126+', label: 'hero.stats.onlineResources', endValue: 126 }
 ];
 
 export default function Hero() {
@@ -28,17 +29,33 @@ export default function Hero() {
   const [scrollY, setScrollY] = useState(0);
   const [animatedStats, setAnimatedStats] = useState(stats.map(() => 0));
   const [statsVisible, setStatsVisible] = useState(false);
+  const [isIntersecting, setIsIntersecting] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsIntersecting(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    const statsSection = document.querySelector('.stats-section');
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isIntersecting) {
+      setStatsVisible(true);
+    }
+  }, [isIntersecting]);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      const statsSection = document.querySelector('.stats-section');
-      if (statsSection) {
-        const rect = statsSection.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.75) {
-          setStatsVisible(true);
-        }
-      }
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -87,10 +104,10 @@ export default function Hero() {
   }, [businesses.length]);
 
   const formatStat = (value: number, index: number) => {
-    if (index === 0) return Math.round(value).toLocaleString() + '+';
-    if (index === 1) return (Math.round(value / 1000000) + 'M+');
-    if (index === 2) return value.toFixed(1) + '/5';
-    return value;
+    if (index === 0) return Math.round(value).toString();
+    if (index === 1) return Math.round(value).toString() + '+';
+    if (index === 2) return Math.round(value / 1000) + 'K';
+    return Math.round(value).toString() + '+';
   };
 
   return (
@@ -107,6 +124,8 @@ export default function Hero() {
           <div className="mx-auto max-w-2xl lg:max-w-4xl">
             <div 
               className="mb-8 inline-flex items-center rounded-full bg-accent/10 px-6 py-2 text-sm font-medium text-accent ring-1 ring-inset ring-accent/20 transition-all duration-500 hover:scale-105 animate-float"
+              role="banner"
+              aria-label={t('hero.newVersion')}
               style={{
                 transform: `translateY(${scrollY * -0.2}px)`,
                 transition: 'transform 0.1s ease-out'
@@ -175,7 +194,7 @@ export default function Hero() {
             </div>
 
             <div 
-              className="mt-12 rounded-xl border border-accent/20 bg-white/60 backdrop-blur-xl p-2 shadow-xl ring-1 ring-accent/5 transition-all duration-500 hover:shadow-2xl"
+              className="mt-16 mb-24 rounded-xl border border-accent/20 bg-white/60 backdrop-blur-xl p-2 shadow-xl ring-1 ring-accent/5 transition-all duration-500 hover:shadow-2xl"
               style={{
                 transform: `translateY(${scrollY * 0.1}px)`,
                 transition: 'transform 0.1s ease-out'
@@ -183,14 +202,15 @@ export default function Hero() {
             >
               <div className="aspect-video rounded-lg bg-gray-100 overflow-hidden">
                 <img 
-                  src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&q=80&w=1200" 
-                  alt="Demo AplicaPOS"
-                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                  src="/erp-dashboard.jpg"
+                  alt={t('hero.imageAlt')}
+                  loading="lazy"
+                  className="w-full h-full object-cover object-center transition-transform duration-700 hover:scale-110"
                 />
               </div>
             </div>
 
-            <div className="stats-section mt-12 grid grid-cols-1 gap-y-8 sm:grid-cols-3 sm:gap-x-12">
+            <div className="stats-section mt-12 grid grid-cols-1 gap-y-8 sm:grid-cols-2 lg:grid-cols-4 sm:gap-x-12 relative z-10">
               {stats.map((stat, index) => (
                 <div 
                   key={stat.label} 
@@ -206,18 +226,16 @@ export default function Hero() {
                     <stat.icon className="relative h-8 w-8 text-primary mb-2 transition-all duration-500 group-hover:scale-125 group-hover:rotate-12" />
                   </div>
                   <dt className="relative text-2xl font-bold text-dark transition-all duration-500 group-hover:text-primary group-hover:scale-110">
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 opacity-0 transform -translate-y-8 group-hover:opacity-100 transition-all duration-300 text-xs text-accent">
-                      +{index === 1 ? '1K' : index === 0 ? '50' : '0.1'}
-                    </span>
                     {formatStat(animatedStats[index], index)}
                   </dt>
-                  <dd className="text-sm text-secondary transition-all duration-500 group-hover:text-dark">{t(stat.label)}</dd>
+                  <dd className="text-sm text-secondary transition-all duration-500 group-hover:text-dark text-center">{t(stat.label)}</dd>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </div>
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
 
       <style>{`
         @keyframes fadeInUp {

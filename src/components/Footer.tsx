@@ -32,7 +32,6 @@ export default function Footer() {
                   alt="AplicaPOS"
                   className="h-12 w-auto"
                 />
-                <span className="text-2xl font-bold text-primary">APOS</span>
               </div>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Transformamos negocios con soluciones innovadoras de punto de venta. 
